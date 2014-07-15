@@ -42,8 +42,12 @@ def getTerminalSize():
 parser = ArgumentParser('requests')
 parser.add_argument('url')
 parser.add_argument('-X', '--request',
+                    metavar='GET',
                     default='GET')
-parser.add_argument('-d', '--data')
+parser.add_argument('-d', '--data',
+                    help="Data to send in the body of the request. "
+                    "If you're giving JSON, an appropriate header "
+                    "will be set.")
 parser.add_argument('-H', '--header', nargs='*')
 parser.add_argument('-i', '--include',
                     help='Include HTTP headers in the response',
