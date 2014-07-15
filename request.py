@@ -58,7 +58,7 @@ def pretty_print(text):
 def print_response(args, response):
     to_print = ""
     if args.include:
-        to_print += json.dumps(dict(response.headers), indent=4) + "\n\n"
+        to_print += pretty_print(json.dumps(dict(response.headers))) + "\n\n"
     to_print += pretty_print(response.text)
     Popen(["less", '-XFR'], stdin=PIPE).communicate(to_print.encode('UTF8'))
 
