@@ -5,14 +5,11 @@ from argparse import ArgumentParser
 from subprocess import Popen, PIPE
 import json
 from pygments import highlight
-from pygments.lexers import get_lexer_by_name, \
-    find_lexer_class, guess_lexer, TextLexer
-from pygments.formatters import get_all_formatters, get_formatter_by_name, \
-    get_formatter_for_filename, find_formatter_class, \
-    TerminalFormatter  # pylint:disable-msg=E0611
+from pygments.lexers import guess_lexer, JSONLexer
+from pygments.formatters import TerminalFormatter
 
 
-def getTerminalSize():
+def get_terminal_size():
     import os
     env = os.environ
 
@@ -21,11 +18,10 @@ def getTerminalSize():
             import fcntl
             import termios
             import struct
-            cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ,
-                                                 '1234'))
+            return struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ,
+                                                   '1234'))
         except:
             return
-        return cr
     cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
     if not cr:
         try:
@@ -39,66 +35,61 @@ def getTerminalSize():
     return int(cr[1]), int(cr[0])
 
 
-parser = ArgumentParser('requests')
-parser.add_argument('url')
-parser.add_argument('-X', '--request',
-                    metavar='GET',
-                    default='GET')
-parser.add_argument('-d', '--data',
-                    help="Data to send in the body of the request. "
-                    "If you're giving JSON, an appropriate header "
-                    "will be set.")
-parser.add_argument('-H', '--header', nargs='*')
-parser.add_argument('-i', '--include',
-                    help='Include HTTP headers in the response',
-                    action='store_true',
-                    default=False)
+def parse_args():
+    parser = ArgumentParser('requests')
+    parser.add_argument('url')
+    parser.add_argument('-X', '--request', dest="method",
+                        metavar='GET', default='GET')
+    parser.add_argument('-d', '--data',
+                        help="Data to send in the body of the request. "
+                        "If you're giving JSON, an appropriate header "
+                        "will be set.")
+    parser.add_argument('-H', '--header', nargs='*')
+    parser.add_argument('-i', '--include',
+                        help='Include HTTP headers in the response',
+                        action='store_true', default=False)
+    return parser.parse_args()
 
-args = parser.parse_args()
 
-if not args.url.lower().startswith('http'):
-    args.url = 'http://' + args.url
-
-headers = {}
-if args.data is not None:
+def prepare_query(args):
+    if not args.url.lower().startswith('http'):
+        args.url = 'http://' + args.url
+    headers = {}
     try:
+        json.loads(args.data)
         headers['Content-Type'] = 'application/json'
-        data = json.loads(args.data)
-    except:
-        data = args.data
-    data = args.data
-else:
-    data = None
+    except Exception:
+        pass
+    headers.update(header.split(': ', 1) for header in args.header)
+    return args.method, args.url, headers, args.data
 
-if args.header is not None:
-    for header in args.header:
-        key, value = header.split(': ', 2)
-        headers[key] = value
 
-response = requests.request(args.request, args.url,
-                            data=args.data,
-                            headers=headers)
-try:
-    lexer = get_lexer_by_name('json')
-    formatter = get_formatter_by_name('terminal')
-    to_print = highlight(json.dumps(json.loads(response.text),
-                                    sort_keys=True,
-                                    indent=4),
-                         lexer, formatter)
-except:
+def do_query(method, url, headers, data):
+    return requests.request(method, url, data=data, headers=headers)
+
+
+def pretty_print(text):
     try:
-        lexer = guess_lexer(response.text)
-        formatter = get_formatter_by_name('terminal')
-        to_print = highlight(response.text, lexer, formatter)
-    except:
-        to_print = response.text
+        return highlight(json.dumps(json.loads(text), indent=4),
+                         JSONLexer(), TerminalFormatter())
+    except Exception:
+        pass
+    try:
+        return highlight(text, guess_lexer(text), TerminalFormatter())
+    except Exception:
+        pass
+    return text
 
-if args.include:
-    to_print = json.dumps(dict(response.headers), indent=4) + "\n\n" + to_print
 
-(width, height) = getTerminalSize()
-if len(to_print.split('\n')) >= height:
-    less = Popen(["less", '-R'], stdin=PIPE)
-    less.communicate(to_print.encode('UTF8'))
-else:
-    print to_print
+def print_response(args, response):
+    to_print = ""
+    if args.include:
+        to_print += json.dumps(dict(response.headers), indent=4) + "\n\n"
+    to_print += pretty_print(response.text)
+    if len(to_print.split('\n')) >= get_terminal_size()[1]:
+        Popen(["less", '-R'], stdin=PIPE).communicate(to_print.encode('UTF8'))
+    else:
+        print to_print
+
+args = parse_args()
+print_response(args, do_query(*prepare_query(args)))

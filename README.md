@@ -1,7 +1,8 @@
 request
 =======
 
-A curl like command line, with automatic pagination when needed, and automatic highlighting.
+A curl or HTTPie like command line, with automatic pagination when
+needed, and automatic highlighting.
 
 usage
 -----
