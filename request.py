@@ -9,32 +9,6 @@ from pygments.lexers import guess_lexer, JSONLexer
 from pygments.formatters import TerminalFormatter
 
 
-def get_terminal_size():
-    import os
-    env = os.environ
-
-    def ioctl_GWINSZ(fd):
-        try:
-            import fcntl
-            import termios
-            import struct
-            return struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ,
-                                                   '1234'))
-        except:
-            return
-    cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
-    if not cr:
-        try:
-            fd = os.open(os.ctermid(), os.O_RDONLY)
-            cr = ioctl_GWINSZ(fd)
-            os.close(fd)
-        except:
-            pass
-    if not cr:
-        cr = (env.get('LINES', 25), env.get('COLUMNS', 80))
-    return int(cr[1]), int(cr[0])
-
-
 def parse_args():
     parser = ArgumentParser('requests')
     parser.add_argument('url')
@@ -86,10 +60,7 @@ def print_response(args, response):
     if args.include:
         to_print += json.dumps(dict(response.headers), indent=4) + "\n\n"
     to_print += pretty_print(response.text)
-    if len(to_print.split('\n')) >= get_terminal_size()[1]:
-        Popen(["less", '-R'], stdin=PIPE).communicate(to_print.encode('UTF8'))
-    else:
-        print to_print
+    Popen(["less", '-XFR'], stdin=PIPE).communicate(to_print.encode('UTF8'))
 
 args = parse_args()
 print_response(args, do_query(*prepare_query(args)))
