@@ -18,7 +18,7 @@ def parse_args():
                         help="Data to send in the body of the request. "
                         "If you're giving JSON, an appropriate header "
                         "will be set.")
-    parser.add_argument('-H', '--header', nargs='*')
+    parser.add_argument('-H', '--header', nargs='*', default=[])
     parser.add_argument('-i', '--include',
                         help='Include HTTP headers in the response',
                         action='store_true', default=False)
