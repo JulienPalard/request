@@ -1,7 +1,7 @@
 request
 =======
 
-A curl like command line in 61 lines of Python, with pagination and highlighting.
+A curl like command line in 66 lines of Python, with pagination and highlighting.
 
 One may prefer using HTTPie, the same with a lot of features.
 

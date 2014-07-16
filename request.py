@@ -7,7 +7,6 @@ import json
 from pygments import highlight
 from pygments.lexers import guess_lexer, JSONLexer
 from pygments.formatters import TerminalFormatter
-from contextlib import suppress
 
 
 def parse_args():
@@ -30,9 +29,11 @@ def prepare_query(args):
     if not args.url.lower().startswith('http'):
         args.url = 'http://' + args.url
     headers = {}
-    with suppress(Exception):
+    try:
         json.loads(args.data)
         headers['Content-Type'] = 'application/json'
+    except Exception:
+        pass
     headers.update(header.split(': ', 1) for header in args.header)
     return args.method, args.url, headers, args.data
 
@@ -42,11 +43,15 @@ def do_query(method, url, headers, data):
 
 
 def pretty_print(text):
-    with suppress(Exception):
+    try:
         return highlight(json.dumps(json.loads(text), indent=4),
                          JSONLexer(), TerminalFormatter())
-    with suppress(Exception):
+    except Exception:
+        pass
+    try:
         return highlight(text, guess_lexer(text), TerminalFormatter())
+    except Exception:
+        pass
     return text
 
 
