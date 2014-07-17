@@ -10,7 +10,7 @@ from pygments.formatters import TerminalFormatter
 
 
 def parse_args():
-    parser = ArgumentParser('requests')
+    parser = ArgumentParser('request')
     parser.add_argument('url')
     parser.add_argument('-X', '--request', dest="method",
                         metavar='GET', default='GET')
