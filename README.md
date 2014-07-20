@@ -8,7 +8,7 @@ One may prefer using HTTPie, the same with a lot of features.
 usage
 -----
 
-    usage: requests [-h] [-X GET] [-d DATA] [-H [HEADER [HEADER ...]]] [-i] url
+    usage: request [-h] [-X GET] [-d DATA] [-H [HEADER [HEADER ...]]] [-i] url
 
     positional arguments:
       url
